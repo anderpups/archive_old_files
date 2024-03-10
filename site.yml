@@ -1,0 +1,41 @@
+- name: Get list of files to archive
+  hosts: all
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Grab json files
+      ansible.builtin.set_fact:
+        old_files: []
+        all_files: "{{ lookup('ansible.builtin.file', 'all_files.json') }}"
+        old_topic_ids: "{{ lookup('ansible.builtin.file', 'old_topic_ids.json') }}"
+
+    - name: Get the list of old files
+      ansible.builtin.set_fact:
+        old_files: >-
+          {{ old_files +
+          [{'name': item.name, 'lastAccessTime': item.lastAccessTime, 'lastWriteTime': item.lastWriteTime}] }}
+      when: "{{ (item.name | split('_') | first) in old_topic_ids }}"
+      loop: "{{ all_files }}"
+
+    - name: Create a file with the old files
+      ansible.builtin.copy:
+        content: "{{ old_files }}"
+        dest: "old_files.json"
+
+    - name: Create csv
+      ansible.builtin.copy:
+        dest: old_files.csv
+        content: Name, Last Write Time, Last Access Time
+
+    - name: Create csv
+      ansible.builtin.lineinfile:
+        path: old_files.csv
+        line: "{{ item.name + ', ' + item.lastWriteTime + ', ' + item.lastAccessTime}}"
+      loop: "{{ old_files }}"
+
+    - name: Display the stats
+      ansible.builtin.debug:
+        msg: |
+          old_files: {{ old_files | length }}
+          old topic ids: {{ old_topic_ids | length }}
+          all files: {{ all_files | length }}
