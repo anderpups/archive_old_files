@@ -1,0 +1,6 @@
+
+########## DELETE ME ###########
+- name: Test
+  ansible.builtin.debug:
+    var: old_file
+

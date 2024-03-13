@@ -1,5 +1,5 @@
 - name: Get list of files to archive
-  hosts: all
+  hosts: localhost
   gather_facts: no
   connection: local
   tasks:
@@ -7,35 +7,72 @@
       ansible.builtin.set_fact:
         old_files: []
         all_files: "{{ lookup('ansible.builtin.file', 'all_files.json') }}"
-        old_topic_ids: "{{ lookup('ansible.builtin.file', 'old_topic_ids.json') }}"
+        old_topics: "{{ lookup('ansible.builtin.file', 'old_topics.json') }}"
 
     - name: Get the list of old files
       ansible.builtin.set_fact:
         old_files: >-
           {{ old_files +
-          [{'name': item.name, 'lastAccessTime': item.lastAccessTime, 'lastWriteTime': item.lastWriteTime}] }}
-      when: "{{ (item.name | split('_') | first) in old_topic_ids }}"
+          [{'file_name': item.name,
+            'topic_id': (old_topics | selectattr('topic_id', 'eq', (item.name | split('_') | first | int)))[0].topic_id,
+          'topic_description': (old_topics | selectattr('topic_id', 'eq', (item.name | split('_') | first | int)))[0].description,
+          'lastWriteTime': item.lastWriteTime}] }}
+      when: "{{ old_topics | selectattr('topic_id', 'eq', (item.name | split('_') | first | int)) }}"
       loop: "{{ all_files }}"
 
     - name: Create a file with the old files
       ansible.builtin.copy:
-        content: "{{ old_files }}"
+        content: "{{ old_files | to_nice_json }}"
         dest: "old_files.json"
+
+
+    ########## DELETE ME ###########
+    - name: Test
+      ansible.builtin.debug:
+        var: old_files
+    - name: Test
+      ansible.builtin.pause:
+        minutes: 5
+        ###################
+
+
+    ########## DELETE ME ###########
+    - name: Test
+      ansible.builtin.set_fact:
+        old_files: "{{ lookup('ansible.builtin.file', 'old_files.json')}}"
+        ###################
 
     - name: Create csv
       ansible.builtin.copy:
         dest: old_files.csv
-        content: Name, Last Write Time, Last Access Time
+        content: file_name, topic_id, topic_description, Last Write Time
 
     - name: Create csv
       ansible.builtin.lineinfile:
         path: old_files.csv
-        line: "{{ item.name + ', ' + item.lastWriteTime + ', ' + item.lastAccessTime}}"
+        line: >-
+          {{ '"' + item.file_name + '"' + ', '
+          + item.topic_id | string | replace(',','') + ', '
+          + '"' + item.topic_description | replace(',','') + '"' + ', '
+          + item.lastWriteTime}}
       loop: "{{ old_files }}"
 
     - name: Display the stats
       ansible.builtin.debug:
         msg: |
-          old_files: {{ old_files | length }}
-          old topic ids: {{ old_topic_ids | length }}
-          all files: {{ all_files | length }}
+          Number of files for deletion: {{ old_files | length }}
+          Number of old topic IDs: {{ old_topics | length }}
+          Number of files in the folder: {{ all_files | length }}
+
+    # - name: Are you sure??
+    #   ansible.builtin.pause:
+
+    # - name: Test
+    #   ansible.builtin.set_fact:
+    #     old_files: "{{ lookup('ansible.builtin.file', 'old_files.json') }}"
+
+    # - name: Loop through old files
+    #   ansible.builtin.include_tasks: move_old_files.yml
+    #   loop: "{{ old_files }}"
+    #   loop_control:
+    #     loop_var: old_file
