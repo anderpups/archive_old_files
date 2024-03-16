@@ -1,0 +1,28 @@
+- name: Remove files from share
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Grab json file
+      ansible.builtin.set_fact:
+        # old_files: "{{ lookup('ansible.builtin.file', 'data/old_files.json') }}"
+        old_files: >-
+          [{
+          "file_name": "5051_11_Paper_Chase_3_-_No_Need_To_Irrigate_Abscesses_MM_CN_sps.pdf",
+          "lastWriteTime": "2018-01-15T05:01:53.336230+00:00",
+          "topic_description": "Paper Chase 3 - No Need To Irrigate Abscesses",
+          "topic_id": 5051
+          }]
+
+    - name: Throw up warning message
+      ansible.builtin.debug:
+        msg: "You are about to remove {{ old_files | length }} files. Are you sure?"
+    - name: Make sure
+      ansible.builtin.pause:
+
+    - name: Delete each file from share
+      ansible.builtin.command: >-
+        /usr/local/bin/azcopy rm
+        {{ source_storage_url }}/{{ source_share_path }}/{{ item.file_name }}?{{ sas_token }}
+        --dry-run
+      loop: "{{ old_files  }}"

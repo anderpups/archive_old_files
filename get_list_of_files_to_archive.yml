@@ -6,8 +6,8 @@
     - name: Grab json files
       ansible.builtin.set_fact:
         old_files: []
-        all_files: "{{ lookup('ansible.builtin.file', 'all_files.json') }}"
-        old_topics: "{{ lookup('ansible.builtin.file', 'old_topics.json') }}"
+        all_files: "{{ lookup('ansible.builtin.file', 'data/all_files.json') }}"
+        old_topics: "{{ lookup('ansible.builtin.file', 'data/old_topics.json') }}"
 
     - name: Get the list of old files
       ansible.builtin.set_fact:
@@ -23,33 +23,16 @@
     - name: Create a file with the old files
       ansible.builtin.copy:
         content: "{{ old_files | to_nice_json }}"
-        dest: "old_files.json"
-
-
-    ########## DELETE ME ###########
-    - name: Test
-      ansible.builtin.debug:
-        var: old_files
-    - name: Test
-      ansible.builtin.pause:
-        minutes: 5
-        ###################
-
-
-    ########## DELETE ME ###########
-    - name: Test
-      ansible.builtin.set_fact:
-        old_files: "{{ lookup('ansible.builtin.file', 'old_files.json')}}"
-        ###################
+        dest: "data/old_files.json"
 
     - name: Create csv
       ansible.builtin.copy:
-        dest: old_files.csv
+        dest: data/old_files.csv
         content: file_name, topic_id, topic_description, Last Write Time
 
     - name: Create csv
       ansible.builtin.lineinfile:
-        path: old_files.csv
+        path: data/old_files.csv
         line: >-
           {{ '"' + item.file_name + '"' + ', '
           + item.topic_id | string | replace(',','') + ', '
@@ -63,16 +46,3 @@
           Number of files for deletion: {{ old_files | length }}
           Number of old topic IDs: {{ old_topics | length }}
           Number of files in the folder: {{ all_files | length }}
-
-    # - name: Are you sure??
-    #   ansible.builtin.pause:
-
-    # - name: Test
-    #   ansible.builtin.set_fact:
-    #     old_files: "{{ lookup('ansible.builtin.file', 'old_files.json') }}"
-
-    # - name: Loop through old files
-    #   ansible.builtin.include_tasks: move_old_files.yml
-    #   loop: "{{ old_files }}"
-    #   loop_control:
-    #     loop_var: old_file
