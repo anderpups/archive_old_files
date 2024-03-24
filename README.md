@@ -1,5 +1,19 @@
 # Archiving Files for CMES Project
 
+
+## Notes
+
+Be careful of different characters. Somewhere in the process they are getting converted.
+  - – vs -
+  - ’ vs '
+
+The task block should a bunch of retries with replacing the bad characters instead of manually replacing to fix this. 
+It actually may be better to to put this in `get_list_of_files_to_archive.yml` instead of `copy_files_to_archive.yml`.
+
+---
+
+Maybe change it to an async task? Larger files take a bit.
+
 ## Prerequisites
 
 - ansible
@@ -9,7 +23,7 @@
 
 ## Grabbing the data
 
-1. Created an SAS token to get the fileshare file details. Make sure it has a short lifespan.
+1. Create an SAS token to get the fileshare file details. Make sure it has a short lifespan.
     - Allowed Services
         - File
     - Allowed Resource types
@@ -19,7 +33,7 @@
         - List
 1. Get all the files from the content folder
 
-`az storage file list --account-name cmescontent --share-name contentshare --path 'CMES-Pi/assets/content/' --output json --sas-token 'xxx' > data/all_files.json`
+    `az storage file list --account-name cmescontent --share-name contentshare --path 'CMES-Pi/assets/content/' --output json --sas-token 'xxx' > data/all_files.json`
 
 1. Get the topics csv and place in the `data/` directory.
    Watch for commas in the descriptions or file names even! 
@@ -41,6 +55,7 @@
         - File
     - Allowed Resource types
         - Container
+        - Object
     - Allowed permissions
         - Read
         - List
@@ -49,6 +64,7 @@
         - Blob
     - Allowed Resource types
         - Container
+        - Object
     - Allowed permissions
         - Read
         - List

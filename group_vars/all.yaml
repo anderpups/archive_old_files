@@ -1,5 +1,5 @@
 ---
 source_storage_url: 'https://cmescontent.file.core.windows.net/contentshare'
-source_share_path: 'CMES-Pi/assets/content/'
+source_share_path: 'CMES-Pi/assets/Content'
 
 dest_storage_url: 'https://cmesarchive.blob.core.windows.net/cmesarchive'

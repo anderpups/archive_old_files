@@ -1,0 +1,19 @@
+---
+- name: Block with rescue
+  block:
+    - name: Show name of file being deleted
+      ansible.builtin.debug:
+        msg: "Deleting {{ file.file_name }}"
+    
+    - name: Delete file
+      ansible.builtin.command: >-
+        /usr/local/bin/azcopy rm
+        {{ source_storage_url }}/{{ source_share_path }}/{{ file.file_name | urlencode }}?{{ sas_token }}
+        {{ azcli_flags }}
+      register: azcli_output
+  rescue:
+    - name: Create list of bad files
+      ansible.builtin.lineinfile:
+        path: delete_failures.json
+        line: "{{ azcli_output.stdout }}"
+        create: yes

@@ -1,0 +1,20 @@
+---
+- name: Block with rescue
+  block:
+    - name: Show name of file being archived
+      ansible.builtin.debug:
+        msg: "Copying {{ file.file_name }}"
+    
+    - name: Copy each file
+      ansible.builtin.command: >-
+        /usr/local/bin/azcopy cp
+        '{{ source_storage_url }}/{{ source_share_path }}/{{ file.file_name | urlencode }}?{{ source_sas_token }}'
+        '{{ dest_storage_url }}/{{ file.file_name | urlencode }}?{{ dest_sas_token }}'
+        {{ azcopy_flags }}
+      register: azcopy_output
+  rescue:
+    - name: create list of bad files
+      ansible.builtin.lineinfile:
+        path: bad_files.json
+        line: "{{ azcopy_output.stdout }}"
+        create: yes
